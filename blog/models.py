@@ -20,7 +20,8 @@ class Role(models.Model):
 class Story(models.Model):
     name = models.CharField(max_length=16)
     content = models.TextField()
-    time = models.DateTimeField()
+    date_now = models.DateField()
+    date_time_now = models.DateTimeField()
     ip = models.CharField(max_length=64, null=True, blank=True)
 
 

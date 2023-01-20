@@ -70,6 +70,8 @@ import time
 
 @csrf_exempt
 def add_story(request):
+    if request.method != 'POST':
+        return HttpResponse("请求错误！")
     if 'HTTP_X_FORWARDED_FOR' in request.META:
         ip = request.META.get('HTTP_X_FORWARDED_FOR')
     else:
@@ -77,20 +79,35 @@ def add_story(request):
     time_tuple = time.localtime(time.time())
     time01 = time.mktime(time_tuple)
     tuple02 = time.localtime(time01)
-    time_now = time.strftime("%Y-%m-%d %H:%M:%S", tuple02)
+    date_time_now = time.strftime("%Y-%m-%d %H:%M:%S", tuple02)
+    date_now = time.strftime("%Y-%m-%d", tuple02)
+    a = Story.objects.filter(date_now=date_now, ip=ip)
+    count = 0
+    for item in a:
+        count = count + 1
+    if count >= 3:
+        data = {
+            "code": 4433,
+            "msg": "每天只能发布3次！"
+        }
+        res = HttpResponse(json.dumps(data))
+        res['Content-Type'] = 'application/json'
+        return res
+
     name = request.POST.get("name")
     content = request.POST.get("content")
-
-    Story.objects.create(name=name, content=content, time=time_now, ip=ip)
+    Story.objects.create(name=name, content=content, date_time_now=date_time_now, date_now=date_now, ip=ip)
     res = HttpResponse('发布成功')
     return res
 
 
 def index_story(request):
+    if request.method != 'GET':
+        return HttpResponse("请求错误！")
     data_list = []
     story_data = Story.objects.order_by("-id")[:3]
     for item in story_data:
-        items = {'id': item.id, 'name': item.name, 'content': item.content, 'time': item.time}
+        items = {'id': item.id, 'name': item.name, 'content': item.content, 'time': item.date_time_now}
         data_list.append(items)
     data = {
         "code": 200,
@@ -103,6 +120,8 @@ def index_story(request):
 
 
 def index_works(request):
+    if request.method != 'GET':
+        return HttpResponse("请求错误！")
     data_list = []
     works_data = Works.objects.order_by("-id")[:6]
     for item in works_data:
@@ -119,6 +138,8 @@ def index_works(request):
 
 
 def index_image(request):
+    if request.method != 'GET':
+        return HttpResponse("请求错误！")
     data_list = []
     image_data = Image.objects.order_by("-id")[:10]
     for item in image_data:
@@ -135,10 +156,12 @@ def index_image(request):
 
 
 def story(request):
+    if request.method != 'GET':
+        return HttpResponse("请求错误！")
     data_list = []
     story_data = Story.objects.order_by("-id")
     for item in story_data:
-        items = {'id': item.id, 'name': item.name, 'content': item.content, 'time': item.time}
+        items = {'id': item.id, 'name': item.name, 'content': item.content, 'time': item.date_time_now}
         data_list.append(items)
     data = {
         "code": 200,
@@ -148,4 +171,3 @@ def story(request):
     res = HttpResponse(json.dumps(data, cls=DateEncoder))
     res['Content-Type'] = 'application/json'
     return res
-
